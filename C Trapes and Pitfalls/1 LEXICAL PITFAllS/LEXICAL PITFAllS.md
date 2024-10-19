@@ -71,3 +71,40 @@ The `open` function in this example returns `-1` if it detects an error and `0` 
 
 ## `&` and `|` are not `&&` and `||`
 
+It is easy to miss an inadvertent substitution of `=` for `==` because so many other languages use `=` for comparison. It is also easy to interchange `&` and `&&`, or `|` and `||`, especially because the `&` and `|` operators in C are different from their counterparts in some other languages. 
+
+| operator | meaning                |
+| :------: | :--------------------- |
+|   `&`    | bit-wise and operation |
+|   `&&`   | logical and operation  |
+|   `|`    | bit-wise or operation  |
+|   `||`   | logical or operation   |
+
+## Greedy lexical analysis
+
+Some C tokens, such as `/`, `*`, and `=`, are only one character long. Other C tokens, such as `/*`, `==`, and identifiers, are several characters long. When a C compiler encounters a `/` followed by an `*`, it must be able to decide whether to treat these two characters as two separate tokens or as one single token. C resolves this question with a simple rule: **repeatedly bite off the biggest possible piece**. That is, the way to convert a C program to tokens is to move from left to right, taking the longest possible token each time. This strategy is also sometimes referred to as *greedy,* or, more colloquially, as the *maximal munch* strategy. Kernighan and Ritchie put it this way: "If the input stream has been parsed into. tokens up to a given character, the next token is taken to include the longest string of characters which could possibly constitute a token." 
+
+Tokens (except string or character constants) never contain embedded white space (blanks, tabs, or newlines). Thus, for instance, `==` is a single token, `= =` is two, and the expression `a---b` means the same as `a-- -b` rather than `a- --b`. 
+
+Similarly, if a `/` is the first character of a token, and the `/` is immediately followed by `*`, the two characters begin a comment, *regardless* of any other context. The following statement looks like it sets `y` to the value of `x` divided by the value pointed to by `p`:
+
+```c
+y = x/*p  /* p points at the divisor */;
+```
+
+In fact, `/*` begins a comment, so the compiler will simply gobble program text until the `*/` appears. In other words, the statement just sets `y` to the value of `x` and doesn't even look at `p`. Rewriting this statement as
+
+```c
+y = x / *p  /* p points at the divisor */;
+```
+
+or even
+
+```c
+y = x / (*p)  /* p points at the divisor */;
+```
+
+would cause it to do the divisIon the comment suggests.
+
+## Integer constants
+
