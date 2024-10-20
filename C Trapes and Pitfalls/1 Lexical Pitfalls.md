@@ -104,7 +104,76 @@ or even
 y = x / (*p)  /* p points at the divisor */;
 ```
 
-would cause it to do the divisIon the comment suggests.
+would cause it to do the division the comment suggests.
 
 ## Integer constants
 
+If the first character of an integer constant is the digit 0, that constant is taken to be in **octal**. Thus `10` and `010` mean very different things. 
+
+Moreover, many C compilers accept 8 and 9 as *"octal"* digits without complaint. The meaning of this strange construct follows from the definition of octal numbers. For instance, `0195` means $1 \times 8^2+ 9 \times 1^1 + 5 \times 8^0$, which is equivalent to 141 (decimal) or 0215 (octal). Obviously we recommend against such usage. ANSI C prohibits it.
+
+Watch out for inadvertent octal values in contexts like this:
+
+```c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    struct {
+        int part_number;
+        char *description;
+    } parttab[] = {
+        046, "left-handed widget",
+        047, "right-handed widget",
+        125, "frammis"};
+
+    for (int i = 0; i < 3; i++) {
+        printf("%d. part_number: %5d, description: %s\n", i, parttab[i].part_number, parttab[i].description);
+    }
+    
+    return 0;
+}
+/************ output ************ 
+0. part_number:    38, description: left-handed widget
+1. part_number:    39, description: right-handed widget
+2. part_number:   125, description: frammis
+************ output ************/
+```
+
+## String and Characters
+
+Single and double quotes mean very different things in C, and confusing them in some contexts will result in surprises rather than error messages.
+
+A character enclosed in single quotes is just another way of writing the integer that corresponds to the given character in the implementation's collating sequence. Thus, in an ASCII implementation, `'a'` means exactly the same thing as `0141` or `97`.
+
+A string enclosed in double quotes, on the other hand, is a short-hand way of writing a pointer to the initial character of a nameless array that has been initialized with the characters between the quotes and an extra character whose binary value is zero.  Thus the statement 
+
+```c
+printf("Hello world\n");
+```
+
+is equivalent to
+
+```c
+char hello[] = {'H', 'e', 'l', 'l', 'o', ' ', 'w', 'o', 'r', 'l', 'd','\n',0};
+print(hello);
+```
+
+Because a character in single quotes represents an integer and a character in double quotes represents a pointer, compiler type checking will usu ally catch places where one is used for the other. Thus, for example, saying
+
+```c
+char *slash = '/';
+```
+
+will yield an error message because '/' is not a character pointer. However, some implementations don't check argument types, particularly arguments to `printf`. Thus, saying
+
+```c
+printf ('\n'); // ok
+```
+
+instead of
+
+```c
+printf("\n"); // Incompatible integer to pointer conversion passing 'int' to parameter of type 'const char *'
+```
+
+may result in a surprise at run time instead of a compiler diagnostic. 
